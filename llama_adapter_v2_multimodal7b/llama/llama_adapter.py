@@ -10,7 +10,7 @@ from timm.models.vision_transformer import Block
 from .llama import ModelArgs, Transformer
 from .tokenizer import Tokenizer
 from .utils import sample_top_p, _download
-
+from util.quant import quant_model_bnb
 
 class LLaMA_adapter(nn.Module):
 
@@ -23,6 +23,7 @@ class LLaMA_adapter(nn.Module):
                  w_bias=False, 
                  w_lora=False, lora_rank=16, 
                  w_new_gate=False,
+                 quant_bits="no",
                  phase="finetune"):
         super().__init__()
 
@@ -69,6 +70,10 @@ class LLaMA_adapter(nn.Module):
         self.llama = Transformer(model_args)
         torch.set_default_tensor_type(torch.FloatTensor)
 
+        # quant model
+        self.llama.layers = quant_model_bnb(self.llama.layers, quant_bit=quant_bits,
+                                            keep_in_fp32_modules=["lora"])
+
         ckpts = sorted(Path(llama_ckpt_dir).glob("*.pth"))
         for ckpt in ckpts:
             ckpt = torch.load(ckpt, map_location='cpu')
@@ -82,10 +87,6 @@ class LLaMA_adapter(nn.Module):
         # 7. training parameters
         self.phase = phase
         self.get_trainable_params(self.phase)
-
-        for name, param in self.named_parameters():
-            if param.requires_grad:
-               print(f"Trainable param: {name}, {param.shape}, {param.dtype}")
 
     def get_trainable_params(self, phase='finetune'):
         for name, para in self.named_parameters():
