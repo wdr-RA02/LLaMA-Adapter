@@ -161,3 +161,6 @@ cython_debug/
 
 # DS store
 .DS_Store
+
+# ignore symlink
+llama_adapter_v2_multimodal7b/data/PCap
