@@ -1,0 +1,6 @@
+<image>\n Write a comment of this image in the context of a given personality trait: <persona>.
+<image>\n Please briefly comment this photo as a person with the personality of: <persona>.
+<image>\n Could you provide a brief comment on this picture from the perspective of someone with the personality of: <persona>?
+<image>\n Share your thoughts on this image considering the personality trait: <persona>.
+<image>\n I'd like your insight on this photo through the lens of a person embodying the following personality: <persona>.
+<image>\n Please give your comment of this image as if you were someone with the personality of: <persona>.

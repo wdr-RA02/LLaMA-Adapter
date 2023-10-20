@@ -1,0 +1,4 @@
+pcap_root_dir: data/PCap/
+prompt_txt: data/pcap.txt
+persona_token: <persona>
+max_word_caption: 30
