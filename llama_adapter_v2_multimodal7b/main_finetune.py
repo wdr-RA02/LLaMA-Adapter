@@ -8,6 +8,7 @@ from util.misc import NativeScalerWithGradNormCount as NativeScaler
 from llama.llama_adapter import LLaMA_adapter
 
 from data.dataset import FinetuneDataset, transform_train
+from data.dataset_pcap import PCapFinetuneDataset
 
 import argparse
 import datetime
@@ -138,7 +139,8 @@ def main(args):
     misc.load_model(model_without_ddp, args.pretrained_path)
 
 
-    dataset_train = FinetuneDataset(args.data_config, transform=transform_train,
+    #dataset_train = FinetuneDataset(args.data_config, transform=transform_train,
+    dataset_train = PCapFinetuneDataset(args.data_config, transform=transform_train,
                                 max_words=args.max_words, tokenizer_path=llama_tokenzier_path)
     print(dataset_train)
     num_tasks = misc.get_world_size()
