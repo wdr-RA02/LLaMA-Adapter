@@ -18,7 +18,7 @@ def train_one_epoch(model: LLaMA_adapter,
     # model.module.set_default_trainability()
 
     metric_logger = misc.MetricLogger(delimiter="  ")
-    metric_logger.add_meter('lr', misc.SmoothedValue(window_size=1, fmt='{value:.6f}'))
+    metric_logger.add_meter('lr', misc.SmoothedValue(window_size=1, fmt='{value:.2e}'))
     header = 'Epoch: [{}]'.format(epoch)
     print_freq = 10
 
