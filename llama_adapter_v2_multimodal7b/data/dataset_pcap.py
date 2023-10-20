@@ -95,7 +95,7 @@ class PCapFinetuneDataset(Dataset):
         input2 = input1 + answer
 
         # debug
-        print(input1)
+        # print(input1)
         input1 = torch.tensor(self.tokenizer.encode(input1, bos=True, eos=False), dtype=torch.int64)
         input2 = torch.tensor(self.tokenizer.encode(input2, bos=True, eos=True), dtype=torch.int64)
         padding = self.max_words - input2.shape[0]
