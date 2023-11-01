@@ -126,13 +126,15 @@ def main(args):
     llama_ckpt_dir = os.path.join(args.llama_path, llama_type)
     llama_tokenzier_path = os.path.join(args.llama_path, 'tokenizer.model')
     model = LLaMA_adapter(llama_ckpt_dir, llama_tokenzier_path, 
-                          w_lora=True, lora_rank=args.lora_rank, 
+                          w_lora=True, lora_rank=args.lora_rank,
+                          w_new_gate=True, 
                           quant_bits=args.quant)
 
     model.to(device)
 
     # make lora the only trainable param in this setting
-    model = trainable_params(model, ["lora"])
+    # bias is not tunable, due to quant settings
+    model = trainable_params(model, ["lora", "norm"])
 
     for name, param in model.named_parameters():
         if param.requires_grad:
@@ -209,10 +211,10 @@ def main(args):
             args=args
         )
 
-        if args.output_dir and (epoch % 5 == 0 or epoch + 1 == args.epochs):
+        if args.output_dir and (epoch % 2 == 0 or epoch + 1 == args.epochs):
             misc.save_model(
                 args=args, model=model, model_without_ddp=model_without_ddp, optimizer=optimizer,
-                loss_scaler=loss_scaler, epoch=epoch)
+                loss_scaler=loss_scaler, epoch=epoch, skip_weight=True)
 
         log_stats = {**{f'train_{k}': v for k, v in train_stats.items()},
                      'epoch': epoch,
