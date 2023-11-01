@@ -296,14 +296,38 @@ def get_grad_norm_(parameters, norm_type: float = 2.0) -> torch.Tensor:
     return total_norm
 
 
-def save_model(args, epoch, model, model_without_ddp, optimizer, loss_scaler):
+# TODO: add logic for saving trainable params only
+def get_trainable_params(model: torch.nn.Module):
+    param=[]
+    for name, params in model.named_parameters():
+        if params.requires_grad:
+            param.append(name)
+    
+    return param
+
+def save_model(args, epoch, model, model_without_ddp, optimizer, loss_scaler, skip_weight:bool=False):
     output_dir = Path(args.output_dir)
     epoch_name = str(epoch)
     if loss_scaler is not None:
         checkpoint_paths = [output_dir / ('checkpoint-%s.pth' % epoch_name)]
+        if skip_weight:
+            print("Skip weight params...")
+            save_this = lambda key:all([k not in key for k in \
+                                        ["attention.wq.weight", "attention.wk.weight", 
+                                         "attention.wv.weight", "attention.wo.weight", 
+                                         "feed_forward.w1.weight", "feed_forward.w2.weight", 
+                                         "feed_forward.w3.weight"]])
+            
+            params_dict = {k: v for k, v in model_without_ddp.state_dict().items()
+                                if save_this(k)}
+            
+        else:
+            params_dict = model_without_ddp.state_dict()
+        print("# saved params = {}".format(len(params_dict.keys())))
+
         for checkpoint_path in checkpoint_paths:
             to_save = {
-                'model': model_without_ddp.state_dict(),
+                'model': params_dict,
                 'optimizer': optimizer.state_dict(),
                 'epoch': epoch,
                 'scaler': loss_scaler.state_dict(),
