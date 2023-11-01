@@ -30,6 +30,10 @@ def _replace_with_bnb_linear(
                         has_fp16_weights=quantization_config.llm_int8_has_fp16_weight,
                         threshold=quantization_config.llm_int8_threshold,
                     )
+                    model._modules[name].weight = bnb.nn.Int8Params(
+                        model._modules[name].weight.data.clone(),
+                        requires_grad=False
+                    )
                     has_been_replaced = True
                 else:
                     if (
@@ -44,6 +48,11 @@ def _replace_with_bnb_linear(
                             module.bias is not None,
                             quantization_config.bnb_4bit_compute_dtype,
                             compress_statistics=quantization_config.bnb_4bit_use_double_quant,
+                            quant_type=quantization_config.bnb_4bit_quant_type,
+                        )
+                        model._modules[name].weight = bnb.nn.Params4bit(
+                            model._modules[name].weight.data.clone(),
+                            requires_grad=False,
                             quant_type=quantization_config.bnb_4bit_quant_type,
                         )
                         has_been_replaced = True
