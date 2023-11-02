@@ -62,8 +62,7 @@ if __name__=="__main__":
     model.eval()
 
     prompt = llama.format_prompt("Write a comment of this image in the context of a given personality trait: <persona>.")
-    prompt.replace("<persona>", args.persona)
-    print(prompt)
+    prompt = prompt.replace("<persona>", args.persona)
 
     img = Image.open(args.img).convert("RGB")
     img = preprocess(img).unsqueeze(0).to(device)
