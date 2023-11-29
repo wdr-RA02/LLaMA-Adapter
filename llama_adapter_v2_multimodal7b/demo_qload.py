@@ -1,9 +1,11 @@
 import llama
 import torch
-import os
+import json
 import argparse
+import os.path as osp
 
 from PIL import Image
+from typing import List, Dict
 from llama.llama_adapter import LLaMA_adapter
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -11,15 +13,15 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 def load(name, llama_dir, llama_type="7B", device=device, 
          max_batch_size: int=1, quant_bits="no"):
    
-    if os.path.isfile(name):
+    if osp.isfile(name):
         model_path = name
     else:
         return RuntimeError(f"Model {name} not found"), None
 
     # BIAS-7B or https://xxx/sha256_BIAS-7B.pth -> 7B
     # llama_type = name.split('.')[0].split('-')[-1]
-    llama_ckpt_dir = os.path.join(llama_dir, llama_type)
-    llama_tokenzier_path = os.path.join(llama_dir, 'tokenizer.model')
+    llama_ckpt_dir = osp.join(llama_dir, llama_type)
+    llama_tokenzier_path = osp.join(llama_dir, 'tokenizer.model')
 
     # load llama_adapter weights and model_cfg
     print(f'Loading LLaMA-Adapter from {model_path}')
@@ -47,12 +49,27 @@ def load(name, llama_dir, llama_type="7B", device=device,
     return model.to(device), model.clip_transform
 
 
+def batch_inference(model, preprocess, device, imgs: List[str], personas: List[str]):
+    assert len(imgs)==len(personas), f"Length inequal, get imgs={len(imgs)} and personas={len(personas)}"
+    model.eval()
+    # build prompt lists
+    p_base = llama.format_prompt("Write a comment of this image in the context of a given personality trait: <persona>.")
+    prompts = [p_base.replace("<persona>", persona) for persona in personas]
+
+    # build imgs
+    img_pil = [Image.open(im).convert("RGB") for im in imgs]
+    imgs_ = torch.stack([preprocess(im) for im in img_pil], dim=0).to(device)
+
+    result = model.generate(img_pil, prompts)[0]
+
+    return result
+
+
 if __name__=="__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--checkpoint", type=str, required=True)
-    parser.add_argument("--img", type=str)
     parser.add_argument("--llama_dir", type=str, required=True)
-    parser.add_argument("--persona", type=str, default="Factual")
+    parser.add_argument("--inference_src", type=str, required=True)
     args=parser.parse_args()
 
     '''your code here'''
@@ -61,12 +78,21 @@ if __name__=="__main__":
     model, preprocess = load(args.checkpoint, llama_dir, device=device, quant_bits="8bit")
     model.eval()
 
-    prompt = llama.format_prompt("Write a comment of this image in the context of a given personality trait: <persona>.")
-    prompt = prompt.replace("<persona>", args.persona)
+    # prompt = llama.format_prompt("Write a comment of this image in the context of a given personality trait: <persona>.")
+    # prompt = prompt.replace("<persona>", args.persona)
 
-    img = Image.open(args.img).convert("RGB")
-    img = preprocess(img).unsqueeze(0).to(device)
+    # img = Image.open(args.img).convert("RGB")
+    # img = preprocess(img).unsqueeze(0).to(device)
 
-    result = model.generate(img, [prompt])[0]
+    # result = model.generate(img, [prompt])[0]
 
+    # load inference_src
+    with open(args.inference_src) as fp:
+        inf_src = json.load(fp)
+    
+    # get image root: $(pwd)/data/PCap/yfcc_images
+    cur_path = osp.split(osp.abspath(__file__))[0]
+    img_root = osp.join(cur_path, "data", "PCap", "yfcc_images")
+
+    result = batch_inference(model, preprocess, device, )
     print(result)

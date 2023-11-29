@@ -15,11 +15,11 @@ mkdir -p "$LOG_DIR"
 
 torchrun --nproc-per-node gpu \
     main_finetune_lora.py --data_config "$CONFIG" --batch_size 1 \
-    --epochs 4 --warmup_epochs 1 --blr 1e-3 --weight_decay 0.02 \
+    --epochs 3 --warmup_epochs 1 --blr 1e-3 --weight_decay 0.02 \
     --num_workers 1 \
     --llama_path "$LLAMA_PATH" \
     --output_dir "$OUTPUT_DIR" \
     --log_dir "$LOG_DIR" \
     --pretrained_path "$PRETRAINED_PATH" \
-    --accum_iter 10 \
+    --accum_iter 5 \
     --quant $quant | tee -a "$OUTPUT_DIR/run.log"
